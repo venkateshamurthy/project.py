@@ -7,12 +7,12 @@ while pass_word=='error_password':
     user_name=input("Username:" )
     pass_word=input("Password:")
 
-    if pass_word=='hello world':
+    if pass_word=='bill' and user_name=='admin':   #change password here
         # print the header for the billing system
         print("\t\t\t\t\tBILLING SYSTEM")
 
         # get the name, address, and phone number of the restaurant
-        hotel_name = "HOTEL KRISHNA VILASA"   #Please Enter your restaurant name b/w "_".               #input('Enter the name of your hotel: ')
+        hotel_name = "HOTEL KRISHNA VILASA"   #Please Enter your restaurant name b/w "_".
         address = "Kulur Ferry Rd, Urwa, Mangaluru, Karnataka 575006"#address
         phone = "9591241675"#phone number
         print("")
@@ -49,6 +49,7 @@ while pass_word=='error_password':
         while loop_bill == 'next':
             # initialize a list to store the items and their corresponding quantities and prices for the current bill
             bill_items = []
+            kot_bill=[]
             total_cost = 0
 
             # create a loop to add items to the bill
@@ -69,6 +70,9 @@ while pass_word=='error_password':
 
                 # add the item, quantity, and cost to the bill
                 bill_items.append([item, quantity, cost])
+
+                #adding item and qty. to KOT bill
+                kot_bill.append([item,quantity])
 
                 # add the cost of the item to the total cost
                 total_cost += cost * quantity
@@ -91,13 +95,12 @@ while pass_word=='error_password':
             print(60*'*')
             # ask the user if they want to process another bill
 
-            #Second bill KOT
-
+#Kitchen purpose bill KOT
             print(60*'*')
             print("\n" + hotel_name)
             print(address)
             print(date.today())
-            print(tabulate(bill_items, headers=["Item", "Quantity"],tablefmt='rounded_outline'))
+            print(tabulate(kot_bill, headers=["Item", "Quantity"],tablefmt='rounded_outline'))
             # ask the user if they want to process another bill
             loop_bill = input("\nNext Bill? [next/done] ")
             print()
@@ -106,5 +109,5 @@ while pass_word=='error_password':
         print("The number of orders taken today is",count)
         print("The total revenue today is ₹",amt)
     else:
-        print("Wrong Password")
-        pass_word='error_password'ugar 
+        print("Wrong Username or Password\nPlease Retry!")
+        pass_word='error_password' 
