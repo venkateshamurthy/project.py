@@ -1,7 +1,10 @@
 from tabulate import tabulate
 from datetime import date
 import random as rd
+import matplotlib.pyplot as plt
+
 #import matplotlib.pylot as plt
+registry={}
 pass_word='error_password'
 while pass_word=='error_password':
     user_name=input("Username:" )
@@ -46,6 +49,8 @@ while pass_word=='error_password':
         count=0
         amt=0
         client=1
+        gry=[]
+        grx=[]
         while loop_bill == 'next':
             # initialize a list to store the items and their corresponding quantities and prices for the current bill
             bill_items = []
@@ -56,6 +61,7 @@ while pass_word=='error_password':
             next_item = 'y'
             #To see the order number of the customer
             print("» Order number",client)
+            gry.append(str(client))
 
             while next_item == 'y':    
                 # get the order number and item details
@@ -91,6 +97,7 @@ while pass_word=='error_password':
             print("Total Cost: ₹" + str(total_cost))
             count+=1
             client+=1
+            grx.append(total_cost)
             amt+=total_cost
             print(60*'*')
             # ask the user if they want to process another bill
@@ -108,6 +115,15 @@ while pass_word=='error_password':
         print("\n\n")
         print("The number of orders taken today is",count)
         print("The total revenue today is ₹",amt)
+        plt.bar(gry, grx)
+
+            # Add a title and label the axes
+        plt.title('Earnings today')
+        plt.ylabel('Collected amount')
+        plt.xlabel('Order number')
+
+        # Show the plot
+        plt.show()
     else:
         print("Wrong Username or Password\nPlease Retry!")
-        pass_word='error_password' 
+        pass_word='error_password'
