@@ -3,10 +3,9 @@ from datetime import date
 import random as rd
 import matplotlib.pyplot as plt
 
-#import matplotlib.pylot as plt
 registry={}
 pass_word='error_password'
-while pass_word=='error_password':
+while pass_word=='error_password': 
     user_name=input("Username:" )
     pass_word=input("Password:")
 
@@ -21,29 +20,27 @@ while pass_word=='error_password':
         print("")
         # create a list of items and their corresponding prices
         items = [
-            ['Tomato Soup', 23],
-            ['Veg clear soup', 43],
-            ['Vegetable Hot N Sour Soup', 34],
-            ['Vegetable Manchow Soup', 34],
-            ['Paneer Tikka', 45],
-            ['Paneer Manchurian', 56],
-            ['Veg Nuggets', 23],
-            ['Mushroom Salt and Pepper', 45],
-            ['Veg Salad', 567],
-            ['Veg Pasta Salad', 567],
-            ['Ham Burger and fries', 420],
-            ['Chicken Nuggets',100],
-            ['Chicks',1000],
-            ['Steak', 250]
+            [1,'Tomato Soup', 50],
+            [2,'Veg clear soup', 55],
+            [3,'Vegetable Hot N Sour Soup', 55],
+            [4,'Vegetable Manchow Soup', 60],
+            [5,'Paneer Tikka', 70],
+            [6,'Paneer Manchurian', 70],
+            [7,'Veg Nuggets', 75],
+            [8,'Mushroom Salt and Pepper', 70],
+            [9,'Veg Salad', 100],
+            [10,'Veg Pasta Salad', 110],
+            [11,'Ham Burger and fries', 150],
+            [12,'Chicken Nuggets',120],
+            [13,'Pizza',150],
+            [14,'Steak', 80]
+            
         ]
 
+        print(tabulate(items, headers=["Sl No.","Item", "Cost"],tablefmt='rounded_outline'))
         print("Menu")
         print("-----------------")
 
-        length=len(items)
-        for i in range (length):
-            print((i+1),"•",items[i][0],"\t₹",items[i][1])
-        print("\n")
         # create a loop to process multiple bills
         loop_bill = 'next'
         count=0
@@ -68,11 +65,12 @@ while pass_word=='error_password':
                
                 print()
                 order_number = int(input("Enter the item no: "))
-                item = items[order_number - 1][0]
-                cost = items[order_number - 1][1]
+                item = items[order_number - 1][1]
+                cost = items[order_number - 1][2]
                
                 # ask the user for the quantity of the item
-                quantity = int(input("Enter the quantity: "))
+                quantity = int(
+input("Enter the quantity: "))
 
                 # add the item, quantity, and cost to the bill
                 bill_items.append([item, quantity, cost])
@@ -115,6 +113,7 @@ while pass_word=='error_password':
         print("\n\n")
         print("The number of orders taken today is",count)
         print("The total revenue today is ₹",amt)
+        print("The average revenue per order is",amt/count)
         plt.bar(gry, grx)
 
             # Add a title and label the axes
