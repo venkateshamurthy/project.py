@@ -64,13 +64,18 @@ while pass_word=='error_password':
                 # get the order number and item details
                
                 print()
-                order_number = int(input("Enter the item no: "))
-                item = items[order_number - 1][1]
-                cost = items[order_number - 1][2]
+                try:
+                    order_number = int(input("Enter the item no: "))
+                    item = items[order_number - 1][1]
+                    cost = items[order_number - 1][2]
+                except:
+                    print("Value error, item doesn't exist, please retry!")
+                    order_number = int(input("Enter the item no: "))
+                    item = items[order_number - 1][1]
+                    cost = items[order_number - 1][2]
                
                 # ask the user for the quantity of the item
-                quantity = int(
-input("Enter the quantity: "))
+                quantity = int(input("Enter the quantity: "))
 
                 # add the item, quantity, and cost to the bill
                 bill_items.append([item, quantity, cost])
@@ -100,7 +105,7 @@ input("Enter the quantity: "))
             print(60*'*')
             # ask the user if they want to process another bill
 
-#Kitchen purpose bill KOT
+            #Kitchen purpose bill KOT
             print(60*'*')
             print("\n" + hotel_name)
             print(address)
