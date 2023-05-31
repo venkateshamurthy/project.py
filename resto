@@ -1,133 +1,262 @@
+#!/usr/bin/env python
+
 from tabulate import tabulate
 from datetime import date
 import random as rd
 import matplotlib.pyplot as plt
+import mysql.connector
+import argparse
 
-registry={}
-pass_word='error_password'
-while pass_word=='error_password': 
-    user_name=input("Username:" )
-    pass_word=input("Password:")
+# DB Connection
+def connect(user,pswd):
+    try:
+        connection = mysql.connector.connect(host='localhost',
+                                             database='restaurant_mgmt',
+                                             user='root',
+                                             password='')
+        if connection.is_connected():
+            db_Info = connection.get_server_info()
+            print("Connected to MySQL Server version ", db_Info)
+            cursor = connection.cursor()
+            cursor.execute("select database();")
+            record = cursor.fetchone()
+            print("You're connected to database: ", record)
+            return connection
+        else:
+            print("No connection")
 
-    if pass_word=='bill' and user_name=='admin':   #change password here
-        # print the header for the billing system
-        print("\t\t\t\t\tBILLING SYSTEM")
+    except mysql.connector.Error as e:
+           print("Error while connecting to MySQL", e)
 
-        # get the name, address, and phone number of the restaurant
-        hotel_name = "HOTEL KRISHNA VILASA"   #Please Enter your restaurant name b/w "_".
-        address = "Kulur Ferry Rd, Urwa, Mangaluru, Karnataka 575006"#address
-        phone = "9591241675"#phone number
-        print("")
-        # create a list of items and their corresponding prices
-        items = [
-            [1,'Tomato Soup', 50],
-            [2,'Veg clear soup', 55],
-            [3,'Vegetable Hot N Sour Soup', 55],
-            [4,'Vegetable Manchow Soup', 60],
-            [5,'Paneer Tikka', 70],
-            [6,'Paneer Manchurian', 70],
-            [7,'Veg Nuggets', 75],
-            [8,'Mushroom Salt and Pepper', 70],
-            [9,'Veg Salad', 100],
-            [10,'Veg Pasta Salad', 110],
-            [11,'Ham Burger and fries', 150],
-            [12,'Chicken Nuggets',120],
-            [13,'Pizza',150],
-            [14,'Steak', 80]
-            
-        ]
+# Close DB Connection
+def close(connection):
+    if connection.is_connected():
+        cursor = connection.cursor()
+        cursor.close()
+        connection.close()
+        print("MySQL connection is closed")
 
-        print(tabulate(items, headers=["Sl No.","Item", "Cost"],tablefmt='rounded_outline'))
-        print("Menu")
-        print("-----------------")
+# List Menu Items
+def list_menu(connection):
+    cursor = connection.cursor()
+    cursor.execute("select * from menu;")
+    records = cursor.fetchall()
+    print("Total rows are:  ", len(records))
+    print("Printing each row")
+    for row in records:
+        print("name:" + row[1])
+        print("price:%.2f"% row[3])
+    cursor.close()
+    return records
 
-        # create a loop to process multiple bills
-        loop_bill = 'next'
-        count=0
-        amt=0
-        client=1
-        gry=[]
-        grx=[]
-        while loop_bill == 'next':
-            # initialize a list to store the items and their corresponding quantities and prices for the current bill
-            bill_items = []
-            kot_bill=[]
-            total_cost = 0
+# Add Menu Item
+def add_menu(connection, item, menu_price):
+    cursor = connection.cursor()
+    cursor.execute("insert into menu(name, description, price) values(%s,%s,%s);", (item, item, menu_price))
+    menu_id = cursor.lastrowid
+    cursor.close()
+    connection.commit()
+    return menu_id
 
-            # create a loop to add items to the bill
-            next_item = 'y'
-            #To see the order number of the customer
-            print("» Order number",client)
-            gry.append(str(client))
+# Delete from Menu
+def del_menu(connection, menu_name):
+    cursor = connection.cursor()
+    cursor.execute("delete from menu where name = %s;", menu_name)
+    connection.commit()
+    cursor.close()
 
-            while next_item == 'y':    
-                # get the order number and item details
-               
-                print()
-                try:
-                    order_number = int(input("Enter the item no: "))
-                    item = items[order_number - 1][1]
-                    cost = items[order_number - 1][2]
-                except:
-                    print("Value error, item doesn't exist, please retry!")
-                    order_number = int(input("Enter the item no: "))
-                    item = items[order_number - 1][1]
-                    cost = items[order_number - 1][2]
-               
-                # ask the user for the quantity of the item
-                quantity = int(input("Enter the quantity: "))
+# Update inventory with quantity for a agiven menu_item
+def update_inventory(connection, menu_name, menu_qty):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select id from menu where name = %s;", (menu_name,))
+    rec=cursor.fetchone()
+    print("inv.id:%s"% rec['id'])
+    menu_id = rec['id']
+    cursor.execute("insert into  inventory (menu_id, qty) values (%s, %s) on duplicate key update qty=%s;", (menu_id, menu_qty, menu_qty))
+    connection.commit()
+    cursor.close()
 
-                # add the item, quantity, and cost to the bill
-                bill_items.append([item, quantity, cost])
+# Display Menu
+def display_menu(connection):
+    print("Display Menu")
+    cursor = connection.cursor()
+    cursor.execute("select * from menu;")
+    for (id, name, description, price) in cursor:
+        print("%s, %s, %s, %s" % (id, name, description, price))
+    cursor.close()
 
-                #adding item and qty. to KOT bill
-                kot_bill.append([item,quantity])
+# Display inventory to know the current availability
+def display_inventory(connection):
+    print("Display Inventory")
+    cursor=connection.cursor()
+    cursor.execute("select name, qty from menu,inventory where menu.id=inventory.menu_id;")
+    for (name, qty) in cursor:
+        print("%s, %s" % (name, qty))
+    cursor.close()
 
-                # add the cost of the item to the total cost
-                total_cost += cost * quantity
-               
-                # ask the user if they want to add more items
-                next_item = input("More Items? [y/n] ")
+ 
+# Change inventory given menu item and quantity
+def change_inventory(connection, menu_item_id, incr_decr_qty):
+    cursor = connection.cursor()
+    cursor.execute("update inventory set qty = qty + %s  where menu_id = %s;", (incr_decr_qty, menu_item_id))
+    connection.commit()
+    cursor.close()
 
-            # print the bill
-            print(40*'*')
-            print("\n" + hotel_name)
-            print(address)
-            print("Phone: " + phone)
-            print(date.today())
-            print("Bill No.: " + str(rd.randint(1000, 9999)))
-            print(tabulate(bill_items, headers=["Item", "Quantity", "Cost"], tablefmt='rounded_outline'))
-            print("Total Cost: ₹" + str(total_cost))
-            count+=1
-            client+=1
-            grx.append(total_cost)
-            amt+=total_cost
-            print(60*'*')
-            # ask the user if they want to process another bill
+# Reserve a table
+def reserve(connection, customer_identification, table_number):
+    cursor = connection.cursor()
+    cursor.execute("select id from customer where lower(name) = lower(%s) OR phone = %s", (customer_identification, customer_identification))
+    cust_rec = cursor.fetchone()
+    cust_id = cust_rec[0];
+    cursor.execute("insert into reservation_order(customer_id, tablenumber) values(%s,%s)",(cust_id, table_number))
+    connection.commit()
+    cursor.close()
+    print("order_id:%s at table:%s" % (cursor.lastrowid, table_number))
+    return cursor.lastrowid
 
-            #Kitchen purpose bill KOT
-            print(60*'*')
-            print("\n" + hotel_name)
-            print(address)
-            print(date.today())
-            print(tabulate(kot_bill, headers=["Item", "Quantity"],tablefmt='rounded_outline'))
-            # ask the user if they want to process another bill
-            loop_bill = input("\nNext Bill? [next/done] ")
-            print()
-           
-        print("\n\n")
-        print("The number of orders taken today is",count)
-        print("The total revenue today is ₹",amt)
-        print("The average revenue per order is",amt/count)
-        plt.bar(gry, grx)
+# Show all reservation orders
+def show_orders(connection):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select tablenumber, reservation_order.id, customer.name, customer.phone, datetime from customer, reservation_order where customer.id=reservation_order.customer_id;")
+    records = cursor.fetchall()
+    print("Current reservation orders and table occupancies")
+    for row in records:
+        print("table=%d, order=%d, customer=%s, phone=%s, datetime=%s" % (row['tablenumber'], row['id'], row['name'], row['phone'], row['datetime']))
+    cursor.close()
 
-            # Add a title and label the axes
-        plt.title('Earnings today')
-        plt.ylabel('Collected amount')
-        plt.xlabel('Order number')
 
-        # Show the plot
-        plt.show()
+# Clear Reservation
+def clear_table(connection, table):
+    cursor = connection.cursor()
+    cursor.execute("delete from reservation_order where tablenumber=%s;", (table,))
+    connection.commit()
+    cursor.close()
+    print("Clearing the table %d & corresponding inventory" % table)
+
+# Add menu items along with their quantities
+def add_order_item(connection, order_id, menu_name, item_qty):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select menu_id, qty from inventory where menu_id = (select id from menu where lower(name) = lower(%s));", (menu_name,))
+    record = cursor.fetchone()
+    cursor.close()
+
+    menu_item_id = record['menu_id']
+    existing_qty = record['qty']
+
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    if existing_qty > item_qty:
+        cursor.execute("insert into order_item values(%s,%s,%s) on duplicate key update qty=%s;", (order_id, menu_item_id, item_qty, item_qty))
+        change_inventory(connection, menu_item_id, -item_qty)
     else:
-        print("Wrong Username or Password\nPlease Retry!")
-        pass_word='error_password'
+        print("Sorry %s is not avialable" % menu_name) 
+    connection.commit()
+    cursor.close()
+    
+
+# List order items
+def list_order_items(connection, order_id):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select name, qty from menu, order_item where order_item.order_id=%s and menu.id=order_item.menu_id;", (order_id,))
+    records = cursor.fetchall()
+    cursor.close()
+    print("Current reservations and table occupancy")
+    for row in records:
+        print("%s, %s" % (row['name'], row['qty']))
+
+# Print Bill
+def print_bill(connection, order_id):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select name, qty, (price*qty) as cost  from menu, order_item where menu.id=order_item.menu_id;")
+    records = cursor.fetchall()
+    cursor.close()
+    total_cost = 0.0
+    total_qty = 0
+    print("|----------------------------------------------------------------------------------")
+    print("| HOTEL KRISHNA VILASA, Kulur Ferry Rd, Urwa, Mangaluru 575006. phone = 9591241675|")
+    print("|----------------------------------------------------------------------------------")
+    print("| BILL:%s                                                         Date:  %s|" % (order_id, date.today()))
+    print("|----------------------------------------------------------------------------------")
+    print("|%-64s|%3s|%12s|" % (' Item', 'Qty', 'Cost(Rs)'))
+    print("|----------------------------------------------------------------------------------")
+    for row in records:
+        print("|%-64s|%3d|%12.2f|" % (" "+row['name'], row['qty'], row['cost']))
+        total_cost +=  float(row['cost'])
+        total_qty  +=  row['qty']
+    print("|----------------------------------------------------------------------------------")
+    print("|%-64s|%3s|%12.2f|" % (" Total(Rs)",total_qty,  total_cost))
+    print("|----------------------------------------------------------------------------------")
+
+# MAIN PROGRAM
+def main():
+    parser = argparse.ArgumentParser(description='Restaurant Booking System')
+    subparser = parser.add_subparsers(dest='command') # create a sub parser
+
+    addMenu = subparser.add_parser('add-menu', help='Add menu items to restaurant with name and price')
+    addMenu.add_argument('-m', '--menu', required=True, help='Menu or the dish name itself such as say \"keribath\"')
+    addMenu.add_argument('-p', '--price',required=True, type=float, help='Price per unit')
+    addMenu.add_argument('-q', '--qty',  required=True, type=int,   help='Quantity to replenish')
+
+    showMenu = subparser.add_parser('show-menu', help='Show menu of the restaurant')
+    showMenu.add_argument('show-menu', action='store_true')
+
+    showInv = subparser.add_parser('show-inv', help='Show the inventory quantities')
+    showInv.add_argument('show-inv', action='store_true')
+
+    showBill = subparser.add_parser('show-bill', help='Prepare Bill')
+    showBill.add_argument('-o', '--order', required=True, type=int, help='Enter the order id')
+
+    reservation = subparser.add_parser('reserve', help='Reserve the table')
+    reservation.add_argument('-i', '--identification', required=True,  help='Customer name or phone number')
+    reservation.add_argument('-t', '--table', required=True, type=int, help='Table number to reserve for the customer')
+
+    addItem = subparser.add_parser('add-item', help='Add menu items to the reservation order')
+    addItem.add_argument('-o', '--order',  required=True, type=int,   help='order id of the reservation')
+    addItem.add_argument('-m', '--menu',  required=True, help='Menu item name to added to the reservation order')
+    addItem.add_argument('-q', '--qty',   required=True, type=int,   help='Quantity of the menu item to be added to the reservation order')
+
+    clearReservation = subparser.add_parser('clear-table', help='Clear Table Reservation')
+    clearReservation.add_argument('-t', '--table', required=True, type=int, help='Enter the table number to clear reservation')
+
+    showOrders = subparser.add_parser('show-orders', help='Show All Reservation Orders')
+    showOrders.add_argument('show-orders', action='store_true')
+
+    args = parser.parse_args()
+    print("args:%s" % args)
+
+
+    admin = connect('admin','admin');
+    if args.command=='show-menu':
+        display_menu(admin)
+    elif args.command=='show-inv':
+        display_inventory(admin)
+    elif args.command == 'add-menu':
+        print("%s, %s, %s" % (args.menu, args.price, args.qty))
+        kesribath_id = add_menu(admin, args.menu, args.price)
+        update_inventory(admin, args.menu, args.qty)
+        print("Menu Items:\n")
+        display_menu(admin)
+        print("Inventory:\n")
+        display_inventory(admin)
+    elif args.command == 'reserve':
+        order_id = reserve(admin, args.identification, args.table)
+        print('order id:%s' % order_id)
+    elif args.command == 'add-item':
+        add_order_item(admin, args.order, args.menu, int(args.qty))
+        list_order_items(admin, args.order)
+    elif args.command == 'show-bill':
+        print_bill(admin, args.order)
+    elif args.command == 'clear-table':
+        clear_table(admin, args.table)
+    elif args.command == 'show-orders':
+        show_orders(admin)
+    else:
+       print("unknown option exiting")
+
+    close(admin)
+    exit()
+
+if __name__=="__main__":
+    main()
+
+
+
