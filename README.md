@@ -17,228 +17,273 @@ Add any other as required
 ```
 ## Main Program help
 ```
-./resto -h
-usage: resto [-h] {add-menu,show-menu,show-inv,show-bill,reserve,add-item,clear-table,show-orders} ...
+python restaurant.py
 
-Restaurant Booking System
-
-positional arguments:
-{add-menu,show-menu,show-inv,show-bill,reserve,add-item,clear-table,show-orders}
-add-menu            Add menu items to restaurant with name and price
-show-menu           Show menu of the restaurant
-show-inv            Show the inventory quantities
-show-bill           Prepare Bill
-reserve             Reserve the table
-add-item            Add menu items to the reservation order
-clear-table         Clear Table Reservation
-show-orders         Show All Reservation Orders
-
-options:
--h, --help            show this help message and exit
+Username:admin
+Password:admin
+                          RESTAURANT MENU SYSTEM
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice:
 ```
-## Show Menu --help
+
+## 1. Display Menu
 ```
- ./resto show-menu -h
-usage: resto show-menu [-h]
-
-positional arguments:
-  show-menu
-
-options:
-  -h, --help  show this help message and exit
-  ```
-
-## Add to menu --help
-```
-./resto add-menu -h
-usage: resto add-menu [-h] -m MENU -p PRICE -q QTY
-
-options:
-  -h, --help            show this help message and exit
-  -m MENU, --menu MENU  Menu or the dish name itself such as say "keribath"
-  -p PRICE, --price PRICE
-                        Price per unit
-  -q QTY, --qty QTY     Quantity to replenish
-```
-## Show Menu
-```
-./resto show-menu
-
-args:Namespace(command='show-menu', **{'show-menu': True})
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
 Display Menu
-
-1, Tomato Soup, Tomato Soup, 50.00
-2, Veg clear soup, Veggie Soup, 55.00
-3, Vegetable Hot N Sour Soup, Veg sour soup, 55.00
-4, Vegetable Manchow Soup, manchow soup, 60.00
-5, Paneer Tikka, Tikka, 70.00
-6, Paneer Manchurian, manchurin, 70.00
-7, Veg Nuggets, Nuggets, 75.00
-8, Mushroom Salt and Pepper, mushroom, 70.00
-9, Veg Salad, Simple Salad, 100.00
-10, Veg Pasta Salad, pasta salad, 110.00
-11, Kesribath, Kesribath, 25.00
-MySQL connection is closed
+╭──────┬───────────────────────────┬───────────────┬─────────╮
+│   Id │ Name                      │ Description   │   Price │
+├──────┼───────────────────────────┼───────────────┼─────────┤
+│    1 │ Tomato Soup               │ Tomato Soup   │      50 │
+│    2 │ Veg clear soup            │ Veggie Soup   │      55 │
+│    3 │ Vegetable Hot N Sour Soup │ Veg sour soup │      55 │
+│    4 │ Vegetable Manchow Soup    │ manchow soup  │      60 │
+│    5 │ Paneer Tikka              │ Tikka         │      70 │
+│    6 │ Paneer Manchurian         │ manchurin     │      70 │
+│    7 │ Veg Nuggets               │ Nuggets       │      75 │
+│    8 │ Mushroom Salt and Pepper  │ mushroom      │      70 │
+│    9 │ Veg Salad                 │ Simple Salad  │     100 │
+│   10 │ Veg Pasta Salad           │ pasta salad   │     110 │
+│   11 │ Kesribath                 │ Kesribath     │      25 │
+│   12 │ Kharabath                 │ Kharabath     │      25 │
+│   13 │ Shavige                   │ Shavige       │      20 │
+╰──────┴───────────────────────────┴───────────────┴─────────╯
+Back to Menu? [y/n]
 ```
-
-
-## Show inventory
+## 2.Add Items to Menu
 ```
-./resto show-inv
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:2
 
-args:Namespace(command='show-inv', **{'show-inv': True})
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
-
-Display Inventory
-Kesribath, 95
-Mushroom Salt and Pepper, 1000
-Paneer Manchurian, 760
-Paneer Tikka, 546
-Tomato Soup, 487
-Veg clear soup, 300
-Veg Nuggets, 900
-Veg Pasta Salad, 2000
-Veg Salad, 1486
-Vegetable Hot N Sour Soup, 400
-Vegetable Manchow Soup, 250
-MySQL connection is closed
-```
-
-## Add to menu
-```
-./resto add-menu -mKharabath -p20.0 -q100
-args:Namespace(command='add-menu', menu='Kharabath', price=20.0, qty=100)
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
-Kharabath, 20.0, 100
-inv.id:12
-Menu Items:
+Food item name:Dumroot
+Cost:30
+Quantity:100
+inv.id:14
+Any more items?[y/n]
+Any more items?[y/n]y
+Food item name:Mysore Pak
+Cost:10
+Quantity:100
+inv.id:15
+Any more items?[y/n]n
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:1
 Display Menu
-
-1, Tomato Soup, Tomato Soup, 50.00
-2, Veg clear soup, Veggie Soup, 55.00
-3, Vegetable Hot N Sour Soup, Veg sour soup, 55.00
-4, Vegetable Manchow Soup, manchow soup, 60.00
-5, Paneer Tikka, Tikka, 70.00
-6, Paneer Manchurian, manchurin, 70.00
-7, Veg Nuggets, Nuggets, 75.00
-8, Mushroom Salt and Pepper, mushroom, 70.00
-9, Veg Salad, Simple Salad, 100.00
-10, Veg Pasta Salad, pasta salad, 110.00
-11, Kesribath, Kesribath, 25.00
-12, Kharabath, Kharabath, 20.00
-
-Inventory:
-Display Inventory
-Kesribath, 95
-Kharabath, 100
-Mushroom Salt and Pepper, 1000
-Paneer Manchurian, 760
-Paneer Tikka, 546
-Tomato Soup, 487
-Veg clear soup, 300
-Veg Nuggets, 900
-Veg Pasta Salad, 2000
-Veg Salad, 1486
-Vegetable Hot N Sour Soup, 400
-Vegetable Manchow Soup, 250
-MySQL connection is closed
+╭──────┬───────────────────────────┬───────────────┬─────────╮
+│   Id │ Name                      │ Description   │   Price │
+├──────┼───────────────────────────┼───────────────┼─────────┤
+│    1 │ Tomato Soup               │ Tomato Soup   │      50 │
+│    2 │ Veg clear soup            │ Veggie Soup   │      55 │
+│    3 │ Vegetable Hot N Sour Soup │ Veg sour soup │      55 │
+│    4 │ Vegetable Manchow Soup    │ manchow soup  │      60 │
+│    5 │ Paneer Tikka              │ Tikka         │      70 │
+│    6 │ Paneer Manchurian         │ manchurin     │      70 │
+│    7 │ Veg Nuggets               │ Nuggets       │      75 │
+│    8 │ Mushroom Salt and Pepper  │ mushroom      │      70 │
+│    9 │ Veg Salad                 │ Simple Salad  │     100 │
+│   10 │ Veg Pasta Salad           │ pasta salad   │     110 │
+│   11 │ Kesribath                 │ Kesribath     │      25 │
+│   12 │ Kharabath                 │ Kharabath     │      25 │
+│   13 │ Shavige                   │ Shavige       │      20 │
+│   14 │ Dumroot                   │ Dumroot       │      30 │
+│   15 │ Mysore Pak                │ Mysore Pak    │      10 │
+╰──────┴───────────────────────────┴───────────────┴─────────╯
+Back to Menu? [y/n]y
 ```
-
-## Reserve a table (--help)
+## 3 Reserve
+```agsl
+Enter your Choice[1-9]:5
+Current reservation orders and table occupancies:[]
+No reservations made!
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:3
+Enter phone number:9986026076
+Enter table:8
+order_id:2 at table:8
 ```
-./resto reserve -h
-usage: resto reserve [-h] -i IDENTIFICATION -t TABLE
-
-options:
-
--h, --help            show this help message and exit
-
--i IDENTIFICATION, --identification IDENTIFICATION
-
-                        Customer name or phone number
-
--t TABLE, --table TABLE
-
-                        Table number to reserve for the customer
-```
-## Reserve a table
-```
-./resto reserve -i9986026076 -t6
-
-args:Namespace(command='reserve', identification='9986026076', table=6)
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
-order_id:3 at table:6
-order id:3
-MySQL connection is closed
-```
-
-
-## Adding a menu item to an reservation order
-```
-./resto add-item -o3 -m"paneer manchurian" -q5
-args:Namespace(command='add-item', order=3, menu='paneer manchurian', qty=5)
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
+## 4. Add  Items to order
+```agsl
+Enter your Choice[1-9]:4
+Enter reservation order id:2
+Enter item name:Kharabath
+enter item qty:7
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:4
+Enter reservation order id:2
+Enter item name:15  
+enter item qty:6
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:4
+Enter reservation order id:2
+Enter item name:11
+enter item qty:4
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:6
+Enter reservation order id:2
 Current reservations and table occupancy
-
-Tomato Soup, 3
-Paneer Tikka, 5
-Paneer Manchurian, 5
-Veg Nuggets, 5
-Veg Salad, 5
-Kesribath, 7
-Kharabath, 12
-MySQL connection is closed
+╭────────────┬───────╮
+│ name       │   qty │
+├────────────┼───────┤
+│ Kesribath  │     4 │
+│ Kharabath  │     7 │
+│ Mysore Pak │     6 │
+╰────────────┴───────╯
+Back to Menu? [y/n]
 ```
-
-
-## Show Bill (--help)
+## 5. Show Orders
 ```
-./resto show-bill -h
-
-usage: resto show-bill [-h] -o ORDER
-
-
-
-options:
-
--h, --help            show this help message and exit
-
--o ORDER, --order ORDER
-
-                        Enter the order id
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:5
+Current reservation orders and table occupancies
+╭────────────────┬──────┬────────┬────────────┬─────────────────────╮
+│   table_number │   id │ name   │      phone │ datetime            │
+├────────────────┼──────┼────────┼────────────┼─────────────────────┤
+│              4 │    1 │ Subbu  │ 9986026076 │ 2023-06-12 16:12:41 │
+╰────────────────┴──────┴────────┴────────────┴─────────────────────╯
+Back to Menu? [y/n]y
 ```
-## Show Bill
+## 6. Show Order Items
 ```
-./resto show-bill --order 3
-
-args:Namespace(command='show-bill', order=3)
-Connected to MySQL Server version  8.0.33
-You're connected to database:  ('restaurant_mgmt',)
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:6
+Enter reservation order id:1
+Current reservations and table occupancy
+╭───────────────────────────┬───────╮
+│ name                      │   qty │
+├───────────────────────────┼───────┤
+│ Tomato Soup               │    10 │
+│ Vegetable Hot N Sour Soup │     7 │
+│ Paneer Tikka              │     4 │
+│ Kharabath                 │     4 │
+╰───────────────────────────┴───────╯
+Back to Menu? [y/n]y
+```
+## 7. Print Bill
+```
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:7
+Enter reservation order id:1
 |----------------------------------------------------------------------------------
 | HOTEL KRISHNA VILASA, Kulur Ferry Rd, Urwa, Mangaluru 575006. phone = 9591241675|
 |----------------------------------------------------------------------------------
-| BILL:3                                                         Date:  2023-05-31|
+| BILL:1                                                         Date:  2023-06-12|
 |----------------------------------------------------------------------------------
-| Item                                                           |Qty|    Cost(Rs)|
++---------------------------+-------+--------+
+| name                      |   qty |   cost |
++===========================+=======+========+
+| Tomato Soup               |    10 |    500 |
++---------------------------+-------+--------+
+| Vegetable Hot N Sour Soup |     7 |    385 |
++---------------------------+-------+--------+
+| Paneer Tikka              |     4 |    280 |
++---------------------------+-------+--------+
+| Kharabath                 |     4 |    100 |
++---------------------------+-------+--------+
+| Total(Rs)                 |    25 |   1265 |
++---------------------------+-------+--------+
 |----------------------------------------------------------------------------------
-| Tomato Soup                                                    |  5|      250.00|
-| Veg Salad                                                      |  5|      500.00|
-| Kesribath                                                      |  5|      125.00|
-| Tomato Soup                                                    |  3|      150.00|
-| Paneer Tikka                                                   |  5|      350.00|
-| Paneer Manchurian                                              |  5|      350.00|
-| Veg Nuggets                                                    |  5|      375.00|
-| Veg Salad                                                      |  5|      500.00|
-| Kesribath                                                      |  7|      175.00|
-| Kharabath                                                      | 12|      240.00|
-|----------------------------------------------------------------------------------
-| Total(Rs)                                                      | 57|     3015.00|
-|----------------------------------------------------------------------------------
-MySQL connection is closed
 ```
+## 8. Clear Table
+```
+Back to Menu? [y/n]y
+1. Display Menu
+2. Add Items To Menu
+3. Reserve 
+4. Add item to Reservation. 
+5. Show Orders. 
+6. Show Order Items. 
+7. Print Bill 
+8. Clear Table 
+9. Log out
+Enter your Choice[1-9]:8
+Enter table:4
+Clearing the table 4 & corresponding inventory
+```
+## 9. Log out
+```agsl
+
+```
+

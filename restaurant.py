@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pickle
 from tabulate import tabulate
 from datetime import date
@@ -5,6 +7,7 @@ import mysql.connector
 import datetime
 import random as rd
 import matplotlib.pyplot as plt
+import argparse
 
 ######VENKAT-CODE-BEGIN#############
 # DB Connection
@@ -108,10 +111,21 @@ def change_inventory(connection, menu_item_id, incr_decr_qty):
 
 # Reserve a table
 def reserve(connection, customer_identification, table_number):
+    cust_id = -1;
     cursor = connection.cursor()
     cursor.execute("select id from customer where lower(name) = lower(%s) OR phone = %s", (customer_identification, customer_identification))
     cust_rec = cursor.fetchone()
-    cust_id = cust_rec[0];
+    if cust_rec is None:
+        print ("Welcome %s to the restaurant. Requesting few more details:", customer_identification)
+        name = input("Enter customer name:")
+        phone = input("Enter phone number:")
+        address = input("Enter address:")
+        cursor.execute("insert into customer values(%s, %s, %s)", (name, phone, address))
+        cust_id = cursor.lastrowid()
+        connection.commit()
+    else:
+        print("Welcome %s for returning visit", customer_identification)
+        cust_id = cust_rec[0];
     cursor.execute("insert into reservation_order(customer_id, table_number) values(%s, %s)",(cust_id, table_number))
     connection.commit()
     cursor.close()
@@ -123,10 +137,13 @@ def show_orders(connection):
     cursor = connection.cursor(buffered=True , dictionary=True)
     cursor.execute("select table_number, reservation_order.id, customer.name, customer.phone, datetime from customer, reservation_order where customer.id=reservation_order.customer_id;")
     records = cursor.fetchall()
-    header = records[0].keys()
-    rows =  [x.values() for x in records]
-    print("Current reservation orders and table occupancies")
-    print(tabulate(rows, header, tablefmt='rounded_outline'))
+    print("Current reservation orders and table occupancies:%s" % records)
+    if len(records)>0:
+        header = records[0].keys()
+        rows =  [x.values() for x in records]
+        print(tabulate(rows, header, tablefmt='rounded_outline'))
+    else:
+        print("No reservations made!")
     cursor.close()
 
 
@@ -173,121 +190,98 @@ def list_order_items(connection, order_id):
     rows =  [x.values() for x in records]
     print(tabulate(rows, header, tablefmt='rounded_outline'))
 
-
-
-# Print Bill
-def print_bill(connection, order_id):
+# Count orders
+def count_orders(connection, day_start, day_end):
+    if day_end == '' or day_end is None:
+        day_end = day_start
+    print ("Orders for the day:[%s - %s]" % (day_start, day_end))
     cursor = connection.cursor(buffered=True , dictionary=True)
-    cursor.execute("select name, qty, (price*qty) as cost  from menu, order_item where menu.id=order_item.menu_id;")
+    cursor.execute("select count(*) as no_of_orders, sum(cost) as revenue, (sum(cost)/count(*)) as avg_revenue from reservation_order where date(datetime) between %s and %s;",
+                   (day_start, day_end))
     records = cursor.fetchall()
     cursor.close()
+    return records
+
+    # Print Bill
+def print_bill(connection, order_id):
+    cursor = connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select name, qty, (price*qty) as cost  from menu, order_item where menu.id=order_item.menu_id and order_item.order_id=%s;",(order_id,))
+    records = cursor.fetchall()
+
     total_cost = 0.0
     total_qty = 0
-    print("|----------------------------------------------------------------------------------")
-    print("| HOTEL KRISHNA VILASA, Kulur Ferry Rd, Urwa, Mangaluru 575006. phone = 9591241675|")
-    print("|----------------------------------------------------------------------------------")
-    print("| BILL:%s                                                         Date:  %s|" % (order_id, date.today()))
-    print("|----------------------------------------------------------------------------------")
-    #print("|%-64s|%3s|%12s|" % (' Item', 'Qty', 'Cost(Rs)'))
-    #print("|----------------------------------------------------------------------------------")
+    print("+============================================+")
+    print("|    HOTEL KRISHNA VILASA, Kulur Ferry Rd,   |")
+    print("| Urwa, Mangaluru 575006. phone = 9591241675 |")
+    print("+--------------------------------------------+")
+    print("| BILL NO:%s                 Date:  %s|" % (order_id, date.today()))
+    #print("+--------------------------------------------+")
     for row in records:
-        #print("|%-64s|%3d|%12.2f|" % (" "+row['name'], row['qty'], row['cost']))
         total_cost +=  float(row['cost'])
         total_qty  +=  row['qty']
-    #print("|----------------------------------------------------------------------------------")
-    #print("|%-64s|%3s|%12.2f|" % (" Total(Rs)",total_qty,  total_cost))
-    #records.append([{'name':'Total(Rs)'}, {'qty', total_qty}, {'cost':total_cost}])
-    header = records[0].keys()
     rows =  [x.values() for x in records]
     rows.append(['Total(Rs)', total_qty, total_cost])
+    #       +============================================+
+    header=["          Name         ","Qty","Cost"]
     print(tabulate(rows, header, tablefmt='grid'))
-    print("|----------------------------------------------------------------------------------")
+    cursor.execute("update reservation_order set cost=%s where id=%s", (total_cost, order_id))
+    connection.commit()
+    cursor.close()
+    #print("|------------------------------------------------|")
 ######VENKAT-CODE-END###############
-
-name='Devdat'
-registry={}
-pass_word='error_password'
-
-
-
-while pass_word=='error_password':
-    user_name=input("Username:" )
-    pass_word=input("Password:")
+# MAIN PROGRAM
+def main():
+    parser = argparse.ArgumentParser(description='Restaurant Booking System')
+    parser.add_argument('-u', '--user',      required=True, help="Enter user name to manage the restaurant booking and billing")
+    parser.add_argument('-p', '--password', required=True, help="Enter password to manage the restaurant booking and billing")
+    args = parser.parse_args()
+    print("args:%s" % args)
+    name='Subramhanya'
+    pass_word=args.password
+    user_name=args.user
 
     admin = connect(user_name,pass_word);
 
     if pass_word=='admin' and user_name=='admin':   #change password here
         q ='y'
-        print('Hello',name)
+        print('Hello', name)
         print("\t\t\t\t\tRESTAURANT MENU SYSTEM")
         while q == 'y':
-            print("1. Display Menu\n2. Add Items To Menu\n3. Reserve \n4. Add item to Reservation. \n5. Show Orders. \n6. Show Order Items. \n7. Print Bill \n8. Clear Table \n9. Log out")
-            f=int(input("Enter your Choice:"))
-            order_id = 0;
+            print("1. Display Menu\n2. Add Items To Menu\n3. Reserve \n4. Add item to Reservation. \n5. Show Orders. \n6. Show Order Items. \n8. Clear Table \n9. Log out")
+            f=int(input("Enter your Choice[1-9]:"))
             if f == 2:
-
-
                 # get the name, address, and phone number of the restaurant
-                hotel_name = "HOTEL KRISHNA VILASA"   #Please Enter your restaurant name b/w "_".
-                address = "Kulur Ferry Rd, Urwa, Mangaluru, Karnataka 575006"#address
-                phone = "9591241675"#phone numbersh
-                print("")
-                # create a list of items and their corresponding prices
-                main=[]
-                #menufile = open("edit.dat", 'ab')#menu file m
                 ans = 'y'
                 while ans == 'y':
                     try:
-                        #rno= int(input("order number:"))
                         name = input("Food item name:")
                         marks = int(input("Cost:"))
                         menu_qty = int(input("Quantity:"))
-                        #Add read data
-                        #lst = [rno, name, marks]
-                        #pickle.dump(lst, menufile)
                         rno = add_menu(admin, name, marks)
                         update_inventory(admin, name, menu_qty)
                         ans = input("Any more items?[y/n]")
                     except:
                         print('There was an error!')
-                        #rno= int(input("order number:"))
-                        #name = input("Food item name:")
-                        #marks = int(input("Cost:"))
-                        #Add read data
-                        #lst = [rno, name, marks]
-                        #pickle.dump(lst, menufile)
                         ans = input("Do you want to quit adding this item? [y/n]:")
-                #menufile.close()
 
                 q = input("Back to Menu? [y/n]")
 
             elif f == 1:
-                #Unpickling
                 display_menu(admin)
                 q = input("Back to Menu? [y/n]")
-                #emp={}
-                #empfile = open("edit.dat", 'rb')
-                #try:
-                    #lstmain1=[]
-                    #while True:
-                        #emp = pickle.load(empfile)
-                        #lstmain1.append(emp)
-                        #xyz = tabulate(lstmain1, headers=["Order no","Food item", "Cost"],tablefmt='rounded_outline')
-
-                #except EOFError:
-                    #empfile.close()
-                    #print(xyz)
-                    #q = input("Back to Menu? [y/n]")
             elif f==3 :
                 customer_identification= input("Enter phone number:")
                 table_number = int(input("Enter table:"))
                 order_id = reserve(admin, customer_identification, table_number)
                 q = input("Back to Menu? [y/n]")
             elif f==4 :
+                more_items = 'y';
                 order_id = input("Enter reservation order id:")
-                menu_name = input("Enter item name:")
-                qty = int(input("enter item qty:"))
-                add_order_item(admin, order_id, menu_name, qty)
+                while more_items=='y':
+                    menu_name = input("Enter item name:")
+                    qty = int(input("Enter item qty:"))
+                    add_order_item(admin, order_id, menu_name, qty)
+                    more_items = input("Add another item[y/n]:")
                 q = input("Back to Menu? [y/n]")
             elif f==5:
                 show_orders(admin)
@@ -308,143 +302,50 @@ while pass_word=='error_password':
                 print('Succesfully logged off')
                 close(admin)
                 q='n'
-
         close(admin)
 
-    elif pass_word=='cashier' and user_name=='cashier':#change password for waiter here
-        print('Greetings!')
-        hotel_name = "HOTEL KRISHNA VILASA"   #Please Enter your restaurant name b/w "_".
-        address = "Kulur Ferry Rd, Urwa, Mangaluru, Karnataka 575006"#address
-        phone = "9591241675"#phone number
+    if pass_word=='cashier' and user_name=='cashier':#change password for waiter here
+        connection = connect(user_name, pass_word)
+        q ='y'
+        print('Hello', name)
+        print("\t\t\t\t\tRESTAURANT MENU SYSTEM")
+        while q == 'y':
+            print("11. Print Bill\n12. Revenue and Footfall\n13. Plot revenue. \n9. Log out")
+            f=int(input("Enter your Choice[1-9]:"))
+            if f==11:
+                order_id = input("Enter reservation order id:")
+                print_bill(connection, order_id)
+                q = input("Back to Menu? [y/n]")
+            elif f==12:
+                day = input("Enter the day to count orders:")
+                if day == '' or day is None:
+                    day=date.today()
+                records = count_orders(connection, day, day)
+                header = records[0].keys()
+                rows =  [x.values() for x in records]
+                print(tabulate(rows, header, tablefmt='grid'))
+                q = input("Back to Menu? [y/n]")
+            elif f==13:
+                day_start = input("Enter Start date:")
+                day_end = input("Enter End date:")
+                records = count_orders(connection, day_start, day_end)
+                header = records[0].keys()
+                rows =  [x.values() for x in records]
+                print(tabulate(rows, header, tablefmt='grid'))
+                q = input("Back to Menu? [y/n]")
+            elif f==9:
+                close(connection)
+                q='n'
+        close(connection)
 
-        print("")
-
-        #Unpickling
-        #emp={}
-        #empfile = open("edit.dat", 'rb')
-        #try:
-        #    lstmain1=[]
-        #    while True:
-        #       emp = pickle.load(empfile)
-        #       lstmain1.append(emp)
-        #except EOFError:
-        #    empfile.close()
-
-
-        #print(tabulate(lstmain1, headers=["Order no","Food item", "Cost"],tablefmt='rounded_outline'))
-        #print("\tMenu")
-        #print("-----------------")
-
-
-        # create a loop to process multiple bills
-        loop_bill = 'yes'
-        count=0#number of customers
-        amt=0#for total revenue
-        client=1#order number
-        gry=[]#graph data(y-axis)
-        grx=[]#graph data(x-axis)
-        while loop_bill == 'yes':
-            # initialize a list to store the items and their corresponding quantities and prices for the current bill
-            bill_items = []
-            kot_bill=[]
-            total_cost = 0
-
-            # create a loop to add items to the bill
-            next_item = 'y'
-            #To see the order number of the customer
-            print("» Order number",client)
-            gry.append(str(client))
-
-            while next_item == 'y':
-                # get the order number and item details
-                print()
-                while True:
-                    try:
-                        item_number = int(input("Enter the item no: "))
-                        item = lstmain1[item_number - 1][1]
-                        cost = lstmain1[item_number - 1][2]
-                        break
-                    except:
-                        print("Value error, item doesn't exist, please retry!")
-
-                # ask the user for the quantity of the item
-                quantity = int(input("Enter the quantity: "))
-
-                # add the item, quantity, and cost to the bill
-                bill_items.append([item, quantity, cost])
-
-                #adding item and qty. to KOT bill
-                kot_bill.append([item,quantity])
-
-                # add the cost of the item to the total cost
-                total_cost += cost * quantity
-
-                # ask the user if they want to add more items
-                next_item = input("More Items? [y/n] ")
-
-            # print the bill
-            print(40*'*')
-            print("\n" + hotel_name)
-            print(address)
-            print("Phone: " + phone)
-            print(date.today())
-            print("Bill No.: " + str(rd.randint(1000, 9999)))
-            print(tabulate(bill_items, headers=["Item", "Quantity", "Cost"], tablefmt='rounded_outline'))
-            print("Total Cost: ₹" + str(total_cost))
-            count+=1
-            client+=1
-            grx.append(total_cost)
-            amt+=total_cost
-            print(60*'*')
-            # ask the user if they want to process another bill
-
-            #Kitchen purpose bill KOT
-            print(60*'*')
-            print("\n" + hotel_name)
-            print(address)
-            print(date.today())
-            print(tabulate(kot_bill, headers=["Item", "Quantity"],tablefmt='rounded_outline'))
-            # ask the user if they want to process another bill
-            loop_bill = input("\nNext Order? [yes/no] ")
-            print()
-
-        print("\n\n")
-        print("The number of orders taken today is",count)
-        print("The total revenue today is ₹",amt)
-        print("The average revenue per order is",amt/count)
-
-        plt.bar(gry, grx)
+        ### plt.bar(gry, grx)
 
         # Add a title and label the axes
-        plt.title('Revenue today')
-        plt.ylabel('Collected amount')
-        plt.xlabel('Order number')
+        ### plt.title('Revenue today')
+        ### plt.ylabel('Collected amount')
+        ### plt.xlabel('Order number')
 
         # Show the plot
-        plt.show()
-
-        rev=open("revenue.dat","ab")
-        #Findind the day of the week
-        # Get the current date and time
-        now = datetime.datetime.now()
-
-        # Use strftime() to format the date and time as a string
-        # with the weekday name (e.g. "Monday", "Tuesday", etc.)
-        weekday= now.strftime("%A")
-        date_=date.today()
-
-        # sample data to save
-
-        # open the existing binary file in write mode
-        file = open("revenue.dat", "ab")
-        # create a dictionary to store the data
-        info= [weekday,date_,amt,count]
-        # use the pickle module to dump the data to the binary file
-        pickle.dump(info, file)
-
-
-    else:
-        print("Wrong Username or Password\nPlease Retry!")
-        pass_word='error_password'
-
-
+        ### plt.show()
+if __name__=="__main__":
+    main()

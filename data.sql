@@ -28,6 +28,7 @@ create table reservation_order (
    id              int primary key  auto_increment,
    customer_id     int not null,
    table_number    int not null,
+   cost            decimal(6,2) not null default 0.0,
    datetime        timestamp not null default current_timestamp,
    constraint uk_cust_table  unique(customer_id, table_number),
    constraint fk_customer_id foreign key(customer_id) references customer(id) on delete cascade);
