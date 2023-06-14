@@ -10,6 +10,43 @@ import matplotlib.pyplot as plt
 import argparse
 
 ######VENKAT-CODE-BEGIN#############
+# DB Creation
+def create_database(user, pswd):
+    try:
+        connection = mysql.connector.connect(host='localhost',
+                                             user=user,
+                                             password=pswd)
+        if connection.is_connected():
+            db_Info = connection.get_server_info()
+            print("Connected to MySQL Server version ", db_Info)
+
+            cursor = connection.cursor()
+            cursor.execute("select database();")
+            record = cursor.fetchone()
+            print("You're connected to database: ", record)
+
+            print ("Reading data.sql:")
+            with open('data.sql', 'r') as sql_file:
+                result_iterator = cursor.execute(sql_file.read(), multi=True)
+                for res in result_iterator:
+                    print("Running query: ", res)  # Will print out a short representation of the query
+                    print(f"Affected {res.rowcount} rows" )
+            connection.commit()  # Remember to commit all your changes!
+
+            print ("Reading values.sql:")
+            with open('values.sql', 'r') as values_file:
+                result_iterator = cursor.execute(values_file.read(), multi=True)
+                for res in result_iterator:
+                    print("Running query: ", res)  # Will print out a short representation of the query
+                    print(f"Affected {res.rowcount} rows" )
+            connection.commit()  # Remember to commit all your changes!
+        else:
+            print("No connection")
+
+    except mysql.connector.Error as e:
+        print("Error while connecting to MySQL", e)
+    connection.close()
+
 # DB Connection
 def connect(user, pswd):
     try:
@@ -101,6 +138,16 @@ def display_inventory(connection):
     print(tabulate(records, headers=["Name", "Quantity"], tablefmt='rounded_outline'))
     cursor.close()
 
+def find_order_id(connection, table_number):
+    cursor=connection.cursor(buffered=True , dictionary=True)
+    cursor.execute("select id from reservation_order where table_number=%s;", (table_number,))
+    record = cursor.fetchone()
+    if record is None:
+        print("This table %s is currently empty." % table_number)
+        return -1
+    else:
+        return record['id']
+    cursor.close()
 
 # Change inventory given menu item and quantity
 def change_inventory(connection, menu_item_id, incr_decr_qty):
@@ -113,23 +160,29 @@ def change_inventory(connection, menu_item_id, incr_decr_qty):
 def reserve(connection, customer_identification, table_number):
     cust_id = -1;
     cursor = connection.cursor()
+    cursor.execute("select * from reservation_order where table_number=%s;", (table_number,))
+    exists = cursor.fetchone()
+    if exists is not None:
+        print("Table %s is already occupied!. Please select another table" % table_number)
+        cursor.close()
+        return
     cursor.execute("select id from customer where lower(name) = lower(%s) OR phone = %s", (customer_identification, customer_identification))
     cust_rec = cursor.fetchone()
     if cust_rec is None:
-        print ("Welcome %s to the restaurant. Requesting few more details:", customer_identification)
+        print ("Welcome %s to the restaurant. Requesting few more details:" % customer_identification)
         name = input("Enter customer name:")
-        phone = input("Enter phone number:")
+        phone = customer_identification
         address = input("Enter address:")
-        cursor.execute("insert into customer values(%s, %s, %s)", (name, phone, address))
-        cust_id = cursor.lastrowid()
+        cursor.execute("insert into customer(name,phone,address) values(%s, %s, %s)",    (name, phone, address))
+        cust_id = cursor.lastrowid
         connection.commit()
     else:
-        print("Welcome %s for returning visit", customer_identification)
+        print("Welcome %s for returning visit" % customer_identification)
         cust_id = cust_rec[0];
     cursor.execute("insert into reservation_order(customer_id, table_number) values(%s, %s)",(cust_id, table_number))
     connection.commit()
     cursor.close()
-    print("order_id:%s at table:%s" % (cursor.lastrowid, table_number))
+    print("Reserved for %s with order_id:%s at table:%s. Proceed to add items" % (customer_identification,cursor.lastrowid, table_number))
     return cursor.lastrowid
 
 # Show all reservation orders
@@ -232,10 +285,24 @@ def print_bill(connection, order_id):
 # MAIN PROGRAM
 def main():
     parser = argparse.ArgumentParser(description='Restaurant Booking System')
-    parser.add_argument('-u', '--user',      required=True, help="Enter user name to manage the restaurant booking and billing")
-    parser.add_argument('-p', '--password', required=True, help="Enter password to manage the restaurant booking and billing")
+    subparser = parser.add_subparsers(dest='command') # create a sub parser
+    create_db = subparser.add_parser('create-db', help='Create database')
+
+    manage = subparser.add_parser('manage', help='Restaurant management function')
+    manage.add_argument('-u', '--user',     required=True, help="Enter user name to manage the restaurant booking and billing")
+    manage.add_argument('-p', '--password', required=True, help="Enter password to manage the restaurant booking and billing")
+
     args = parser.parse_args()
     print("args:%s" % args)
+
+    if args.command is None:
+        print("No command passed ; Use one of [create-db|manage]")
+        return
+    elif args.command=='create-db':
+        print("Creating database...")
+        create_database('root','')
+        return
+
     name='Subramhanya'
     pass_word=args.password
     user_name=args.user
@@ -255,9 +322,9 @@ def main():
                 while ans == 'y':
                     try:
                         name = input("Food item name:")
-                        marks = int(input("Cost:"))
+                        cost = int(input("Cost:"))
                         menu_qty = int(input("Quantity:"))
-                        rno = add_menu(admin, name, marks)
+                        rno = add_menu(admin, name, cost)
                         update_inventory(admin, name, menu_qty)
                         ans = input("Any more items?[y/n]")
                     except:
@@ -266,10 +333,10 @@ def main():
 
                 q = input("Back to Menu? [y/n]")
 
-            elif f == 1:
+            elif f == 1: #Display Menu
                 display_menu(admin)
                 q = input("Back to Menu? [y/n]")
-            elif f==3 :
+            elif f==3 : #Reserve a table
                 customer_identification= input("Enter phone number:")
                 table_number = int(input("Enter table:"))
                 order_id = reserve(admin, customer_identification, table_number)
@@ -310,10 +377,10 @@ def main():
         print('Hello', name)
         print("\t\t\t\t\tRESTAURANT MENU SYSTEM")
         while q == 'y':
-            print("11. Print Bill\n12. Revenue and Footfall\n13. Plot revenue. \n9. Log out")
+            print("11. Print Bill\n12. Revenue and Footfall\n13. Plot revenue. \n14. Find Order Id. \n9. Log out")
             f=int(input("Enter your Choice[1-9]:"))
             if f==11:
-                order_id = input("Enter reservation order id:")
+                order_id = input("Enter reservation order id or table number:")
                 print_bill(connection, order_id)
                 q = input("Back to Menu? [y/n]")
             elif f==12:
@@ -332,6 +399,10 @@ def main():
                 header = records[0].keys()
                 rows =  [x.values() for x in records]
                 print(tabulate(rows, header, tablefmt='grid'))
+                q = input("Back to Menu? [y/n]")
+            elif f==14:
+                table_number = int(input("Enter table number:"))
+                print("The table %s is occupied by the order_id: %s" % (table_number, find_order_id(connection, table_number)))
                 q = input("Back to Menu? [y/n]")
             elif f==9:
                 close(connection)
