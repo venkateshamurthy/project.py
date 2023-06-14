@@ -48,17 +48,19 @@ create table bill(
    items           JSON not null);
 
 
-create user if not exists 'admin'@'*' identified by 'admin';
-create user if not exists 'cashier'@'*' identified by 'cashier';
+create user if not exists 'admin'@'localhost' identified by 'admin';
+create user if not exists 'cashier'@'localhost' identified by 'cashier';
 
 grant create, drop, insert, delete, select, update on restaurant_mgmt.inventory to 'admin'@'*';
-grant select, update on restaurant_mgmt.inventory to 'cashier'@'*';
-grant create, drop, insert, delete, select, update on restaurant_mgmt.bill to 'cashier'@'*';
-grant all privileges on restaurant_mgmt.menu  to 'cashier'@'*';
-grant all privileges on restaurant_mgmt.menu  to 'admin'@'*';
-grant all privileges on restaurant_mgmt.order_item  to 'admin'@'*';
-grant all privileges on restaurant_mgmt.order_item  to 'cashier'@'*';
-grant all privileges on restaurant_mgmt.customer  to 'cashier'@'*';
-grant all privileges on restaurant_mgmt.customer  to 'admin'@'*';
-grant all privileges on restaurant_mgmt.customer  to 'admin'@'*';
-grant all privileges on restaurant_mgmt.reservation_order  to 'cashier'@'*';
+grant create, drop, insert, delete, select, update on restaurant_mgmt.inventory to 'admin'@'localhost';
+grant select, update on restaurant_mgmt.inventory to 'cashier'@'localhost';
+grant all privileges on restaurant_mgmt.menu  to 'cashier'@'localhost';
+grant all privileges on restaurant_mgmt.menu  to 'admin'@'localhost';
+grant all privileges on restaurant_mgmt.reservation_order  to 'cashier'@'localhost';
+grant all privileges on restaurant_mgmt.reservation_order  to 'admin'@'localhost';
+grant all privileges on restaurant_mgmt.order_item  to 'admin'@'localhost';
+grant all privileges on restaurant_mgmt.order_item  to 'cashier'@'localhost';
+grant all privileges on restaurant_mgmt.customer  to 'cashier'@'localhost';
+grant all privileges on restaurant_mgmt.customer  to 'admin'@'localhost';
+grant all privileges on restaurant_mgmt.customer  to 'admin'@'localhost';
+grant all privileges on restaurant_mgmt.reservation_order  to 'cashier'@'localhost';
